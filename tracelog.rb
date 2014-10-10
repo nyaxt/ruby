@@ -13,14 +13,14 @@ tarai(3, 2, 0)
 
 class TraceLog
   def self.to_json
-    events = to_a.map {|name, cat, ph|
+    events = to_a.map {|name, cat, ph, ts|
       {
         name: name,
         cat: cat,
         ph: ph,
         pid: 123,
         tid: 456,
-        ts: Time.now
+        ts: ts
       }
     }
 

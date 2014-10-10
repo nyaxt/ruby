@@ -13,11 +13,24 @@
 #include "ruby/debug.h"
 
 #include <assert.h>
+#include <time.h>
+
+static uint64_t
+clocknow(void)
+{
+    struct timespec ts;
+    int ret = clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts);
+    // assert(ret == 0);
+    (void)ret;
+
+    return (uint64_t)(ts.tv_sec * 1000000) + (uint64_t)(ts.tv_nsec / 1000);
+}
 
 typedef struct rb_tracelog_event_struct {
     const char* name;
     const char* category;
     char phase;
+    uint64_t ts_micro;
     struct rb_tracelog_event_struct *next;
 } rb_tracelog_event_t;
 
@@ -80,6 +93,7 @@ tracelog_event_new_from_literal(const char* name, const char* category, char pha
     event->name = name;
     event->category = category;
     event->phase = phase;
+    event->ts_micro = clocknow();
     event->next = NULL;
 
     g_tracelog->tail_event->next = event;
@@ -106,6 +120,7 @@ tracelog_init(void)
     event->name = "TracingStartSentinel";
     event->category = "TraceLog";
     event->phase = 'I';
+    event->ts_micro = clocknow();
     event->next = NULL;
 
     g_tracelog->head_event = event;
@@ -124,8 +139,9 @@ tracelog_to_a()
         VALUE rb_name = rb_str_new_cstr(event->name);
         VALUE rb_category = rb_str_new_cstr(event->category);
         VALUE rb_phase = rb_str_new(&event->phase, 1);
+        VALUE rb_ts_micro = ULL2NUM(event->ts_micro);
 
-        VALUE rb_event = rb_ary_new_from_args(3, rb_name, rb_category, rb_phase);
+        VALUE rb_event = rb_ary_new_from_args(4, rb_name, rb_category, rb_phase, rb_ts_micro);
         rb_ary_push(ret, rb_event);
     }
 
