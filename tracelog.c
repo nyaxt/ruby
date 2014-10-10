@@ -51,7 +51,7 @@ chunk_new(void)
     return chunk;
 }
 
-void*
+static void*
 chunk_alloc_mem(rb_tracelog_chunk_t* chunk, size_t size)
 {
     size_t space_left;
@@ -86,8 +86,8 @@ tracelog_event_new_from_literal(const char* name, const char* category, char pha
     g_tracelog->tail_event->next = event;
 }
 
-void
-Init_tracelog(void)
+static void
+tracelog_init(void)
 {
     rb_tracelog_event_t* event;
 
@@ -103,4 +103,28 @@ Init_tracelog(void)
 
     g_tracelog->head_event = event;
     g_tracelog->tail_event = event;
+}
+
+static VALUE rb_cTraceLog;
+
+static VALUE
+tracelog_to_a()
+{
+    VALUE ret = rb_ary_new();
+
+    rb_tracelog_event_t* ev;
+    for (ev = g_tracelog->head_event; ev; ev = ev->next) {
+        printf("name: %s, cat: %s, ph: %c\n", ev->name, ev->category, ev->phase);
+    }
+
+    return ret;
+}
+
+void
+Init_tracelog(void)
+{
+    rb_cTraceLog = rb_define_class("TraceLog", rb_cObject);
+    rb_define_singleton_method(rb_cTraceLog, "to_a", tracelog_to_a, 0);
+
+    tracelog_init();
 }
