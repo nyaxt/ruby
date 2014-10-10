@@ -98,6 +98,9 @@ typedef enum {
 void rb_add_event_hook2(rb_event_hook_func_t func, rb_event_flag_t events, VALUE data, rb_event_hook_flag_t hook_flag);
 void rb_thread_add_event_hook2(VALUE thval, rb_event_hook_func_t func, rb_event_flag_t events, VALUE data, rb_event_hook_flag_t hook_flag);
 
+/* Tracelog API */
+/* TBD */
+
 RUBY_SYMBOL_EXPORT_END
 
 #if defined(__cplusplus)
