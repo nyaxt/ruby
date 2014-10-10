@@ -15,6 +15,7 @@
 #include "internal.h"
 #include "probes.h"
 #include "probes_helper.h"
+#include "ruby/debug.h"
 
 /* control stack frame */
 

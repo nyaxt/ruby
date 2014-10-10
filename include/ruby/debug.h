@@ -99,7 +99,15 @@ void rb_add_event_hook2(rb_event_hook_func_t func, rb_event_flag_t events, VALUE
 void rb_thread_add_event_hook2(VALUE thval, rb_event_hook_func_t func, rb_event_flag_t events, VALUE data, rb_event_hook_flag_t hook_flag);
 
 /* Tracelog API */
-/* TBD */
+void rb_tracelog_event_new_from_literal(const char* name, const char* category, char phase);
+#define RUBY_TRACE_EVENT_BEGIN0(name, category) \
+    do { \
+        rb_tracelog_event_new_from_literal((name), (category), 'B'); \
+    } while(0);
+#define RUBY_TRACE_EVENT_END0(name, category) \
+    do { \
+        rb_tracelog_event_new_from_literal((name), (category), 'E'); \
+    } while(0);
 
 RUBY_SYMBOL_EXPORT_END
 

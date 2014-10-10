@@ -851,15 +851,36 @@ trace
         switch(flag) {
           case RUBY_EVENT_CALL:
             RUBY_DTRACE_METHOD_ENTRY_HOOK(th, 0, 0);
+            RUBY_TRACE_EVENT_BEGIN0("Method", "trace");
             break;
           case RUBY_EVENT_C_CALL:
             RUBY_DTRACE_CMETHOD_ENTRY_HOOK(th, 0, 0);
+            RUBY_TRACE_EVENT_BEGIN0("CMethod", "trace");
             break;
           case RUBY_EVENT_RETURN:
             RUBY_DTRACE_METHOD_RETURN_HOOK(th, 0, 0);
+            RUBY_TRACE_EVENT_END0("Method", "trace");
             break;
           case RUBY_EVENT_C_RETURN:
             RUBY_DTRACE_CMETHOD_RETURN_HOOK(th, 0, 0);
+            RUBY_TRACE_EVENT_END0("CMethod", "trace");
+            break;
+        }
+    }
+
+    if (1) { /* FIXME */
+        switch(flag) {
+          case RUBY_EVENT_CALL:
+            RUBY_TRACE_EVENT_BEGIN0("Method", "trace");
+            break;
+          case RUBY_EVENT_C_CALL:
+            RUBY_TRACE_EVENT_BEGIN0("CMethod", "trace");
+            break;
+          case RUBY_EVENT_RETURN:
+            RUBY_TRACE_EVENT_END0("Method", "trace");
+            break;
+          case RUBY_EVENT_C_RETURN:
+            RUBY_TRACE_EVENT_END0("CMethod", "trace");
             break;
         }
     }

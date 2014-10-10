@@ -66,13 +66,12 @@ chunk_alloc_mem(rb_tracelog_chunk_t* chunk, size_t size)
     }
 
     chunk->capacity += size;
-    ret = (void*)((uintptr_t)chunk->data_head + size);
-    chunk->data_head = (void*)ret;
+    ret = chunk->data_head;
+    chunk->data_head = (void*)((uintptr_t)chunk->data_head + size);;
     return ret;
 }
 
-/* name, category must be string literal and not dynamically allocated. */
-void
+static void
 tracelog_event_new_from_literal(const char* name, const char* category, char phase)
 {
     rb_tracelog_chunk_t* chunk = g_tracelog->tail_chunk; 
@@ -84,6 +83,14 @@ tracelog_event_new_from_literal(const char* name, const char* category, char pha
     event->next = NULL;
 
     g_tracelog->tail_event->next = event;
+    g_tracelog->tail_event = event;
+}
+
+/* name, category must be string literal and not dynamically allocated. */
+void
+rb_tracelog_event_new_from_literal(const char* name, const char* category, char phase)
+{
+    tracelog_event_new_from_literal(name, category, phase);
 }
 
 static void
@@ -112,9 +119,14 @@ tracelog_to_a()
 {
     VALUE ret = rb_ary_new();
 
-    rb_tracelog_event_t* ev;
-    for (ev = g_tracelog->head_event; ev; ev = ev->next) {
-        printf("name: %s, cat: %s, ph: %c\n", ev->name, ev->category, ev->phase);
+    rb_tracelog_event_t* event;
+    for (event = g_tracelog->head_event; event; event = event->next) {
+        VALUE rb_name = rb_str_new_cstr(event->name);
+        VALUE rb_category = rb_str_new_cstr(event->category);
+        VALUE rb_phase = rb_str_new(&event->phase, 1);
+
+        VALUE rb_event = rb_ary_new_from_args(3, rb_name, rb_category, rb_phase);
+        rb_ary_push(ret, rb_event);
     }
 
     return ret;
@@ -123,8 +135,12 @@ tracelog_to_a()
 void
 Init_tracelog(void)
 {
+    tracelog_init();
+
     rb_cTraceLog = rb_define_class("TraceLog", rb_cObject);
     rb_define_singleton_method(rb_cTraceLog, "to_a", tracelog_to_a, 0);
 
-    tracelog_init();
+    /*
+    rb_add_event_hook(tracelog_event_hook, RUBY_EVENT_ALL, 
+    */
 }
