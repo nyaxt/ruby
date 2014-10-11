@@ -149,7 +149,7 @@ arg_string_literal_serialize(void* data)
 {
     rb_tracelog_arg_string_literal_t *arg = (rb_tracelog_arg_string_literal_t*)data;
     VALUE key = rb_str_new_cstr(arg->key);
-    VALUE val= rb_str_new_cstr(arg->val);
+    VALUE val = rb_str_new_cstr(arg->val);
 
     VALUE args = rb_hash_new();
     rb_hash_aset(args, key, val);

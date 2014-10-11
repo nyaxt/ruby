@@ -1370,17 +1370,25 @@ call_without_gvl(void *(*func)(void *), void *data1,
  *   they will work without GVL, and may acquire GVL when GC is needed.
  */
 void *
-rb_thread_call_without_gvl2(void *(*func)(void *), void *data1,
-			    rb_unblock_function_t *ubf, void *data2)
+real_rb_thread_call_without_gvl2(void *(*func)(void *), const char* funcname, void *data1,
+			         rb_unblock_function_t *ubf, void *data2)
 {
-    return call_without_gvl(func, data1, ubf, data2, TRUE);
+    void* ret;
+    RUBY_TRACE_EVENT_BEGIN1("rb_thread_call_without_gvl", "thread", "func", funcname);
+    ret = call_without_gvl(func, data1, ubf, data2, TRUE);
+    RUBY_TRACE_EVENT_END0("rb_thread_call_without_gvl", "thread");
+    return ret;
 }
 
 void *
-rb_thread_call_without_gvl(void *(*func)(void *data), void *data1,
-			    rb_unblock_function_t *ubf, void *data2)
+real_rb_thread_call_without_gvl(void *(*func)(void *data), const char* funcname, void *data1,
+			        rb_unblock_function_t *ubf, void *data2)
 {
-    return call_without_gvl(func, data1, ubf, data2, FALSE);
+    void* ret;
+    RUBY_TRACE_EVENT_BEGIN1("rb_thread_call_without_gvl2", "thread", "func", funcname);
+    ret = call_without_gvl(func, data1, ubf, data2, FALSE);
+    RUBY_TRACE_EVENT_END0("rb_thread_call_without_gvl2", "thread");
+    return ret;
 }
 
 VALUE

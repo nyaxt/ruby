@@ -20,15 +20,22 @@ extern "C" {
 #endif
 
 #include "ruby/intern.h"
+#include "ruby/debug.h"
 
 RUBY_SYMBOL_EXPORT_BEGIN
 
 void *rb_thread_call_with_gvl(void *(*func)(void *), void *data1);
 
-void *rb_thread_call_without_gvl(void *(*func)(void *), void *data1,
-				 rb_unblock_function_t *ubf, void *data2);
-void *rb_thread_call_without_gvl2(void *(*func)(void *), void *data1,
-				  rb_unblock_function_t *ubf, void *data2);
+void *real_rb_thread_call_without_gvl(void *(*func)(void *), const char* funcname, void *data1,
+				      rb_unblock_function_t *ubf, void *data2);
+void *real_rb_thread_call_without_gvl2(void *(*func)(void *), const char* funcname, void *data1,
+				       rb_unblock_function_t *ubf, void *data2);
+
+#define rb_thread_call_without_gvl(func, data1, ubf, data2) \
+    real_rb_thread_call_without_gvl((func), STRINGIZE(func), (data1), (ubf), (data2));
+
+#define rb_thread_call_without_gvl2(func, data1, ubf, data2) \
+    real_rb_thread_call_without_gvl2((func), STRINGIZE(func), (data1), (ubf), (data2));
 
 #define RUBY_CALL_WO_GVL_FLAG_SKIP_CHECK_INTS_AFTER 0x01
 #define RUBY_CALL_WO_GVL_FLAG_SKIP_CHECK_INTS_
