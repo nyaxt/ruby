@@ -14,6 +14,7 @@
 
 #include <assert.h>
 #include <time.h>
+#include <sys/mman.h>
 
 static uint64_t
 clocknow(void)
@@ -23,7 +24,8 @@ clocknow(void)
     // assert(ret == 0);
     (void)ret;
 
-    return (uint64_t)(ts.tv_sec * 1000000) + (uint64_t)(ts.tv_nsec / 1000);
+    return ts.tv_nsec;
+    //return (uint64_t)(ts.tv_sec * 1000000) + (uint64_t)(ts.tv_nsec / 1000);
 }
 
 typedef struct rb_tracelog_event_struct {
@@ -51,13 +53,21 @@ typedef struct rb_tracelog_struct {
     struct rb_tracelog_event_struct *tail_event;
 } rb_tracelog_t;
 
+void*
+tracelog_malloc(size_t size)
+{
+    void *ret = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    assert(ret != MAP_FAILED);
+    return ret;
+}
+
 static rb_tracelog_t* g_tracelog; // FIXME: this should be thread local
 
 static rb_tracelog_chunk_t*
 chunk_new(void)
 {
     rb_tracelog_chunk_t *chunk = ALLOC(rb_tracelog_chunk_t);
-    chunk->data_head = xmalloc(TRACELOG_CHUNK_SIZE);
+    chunk->data_head = tracelog_malloc(TRACELOG_CHUNK_SIZE);
     chunk->len = 0;
     chunk->capacity = TRACELOG_CHUNK_SIZE;
     chunk->next = NULL;
@@ -74,22 +84,28 @@ chunk_alloc_mem(rb_tracelog_chunk_t* chunk, size_t size)
     assert(chunk->capacity > chunk->len);
     space_left = chunk->capacity - chunk->len;
     if (space_left < size) {
-        chunk->next = chunk_new();
-        return chunk_alloc_mem(chunk->next, size);
+        rb_tracelog_chunk_t *new_chunk = chunk_new();
+        chunk->next = new_chunk;
+        g_tracelog->tail_chunk = new_chunk;
+        return chunk_alloc_mem(new_chunk, size);
     }
 
-    chunk->capacity += size;
+    chunk->len += size;
     ret = chunk->data_head;
-    chunk->data_head = (void*)((uintptr_t)chunk->data_head + size);;
+    chunk->data_head = (void*)((uintptr_t)chunk->data_head + size);
     return ret;
 }
 
 static void
 tracelog_event_new_from_literal(const char* name, const char* category, char phase)
 {
-    rb_tracelog_chunk_t* chunk = g_tracelog->tail_chunk; 
+    rb_tracelog_chunk_t* chunk;
+    rb_tracelog_event_t* event;
 
-    rb_tracelog_event_t* event = chunk_alloc_mem(chunk, sizeof(rb_tracelog_event_t));
+    if (!g_tracelog) return;
+
+    chunk = g_tracelog->tail_chunk; 
+    event = chunk_alloc_mem(chunk, sizeof(rb_tracelog_event_t));
     event->name = name;
     event->category = category;
     event->phase = phase;

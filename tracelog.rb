@@ -7,9 +7,9 @@ def tarai( x, y, z )
   end
 end
 
-tarai(3, 2, 0)
+tarai(8, 4, 0)
 
-# require 'json'
+require 'json'
 
 class TraceLog
   def self.to_json
@@ -23,14 +23,16 @@ class TraceLog
         ts: ts
       }
     }
+    # events.each {|e| p e }
 
     {
       traceEvents: events,
       otherData: {
         version: "ruby #{RUBY_VERSION}" 
       }
-    }#.to_json    
+    }.to_json    
   end
 end
 
-p TraceLog.to_json
+open("trace.json", "w") {|f| f.write TraceLog.to_json }
+STDERR.puts "DONE!"

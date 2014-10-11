@@ -101,6 +101,7 @@ vm_push_frame(rb_thread_t *th,
 	SDR();
     }
 
+    // RUBY_TRACE_EVENT_BEGIN0("frame", "frame");
     return cfp;
 }
 
@@ -112,6 +113,8 @@ vm_pop_frame(rb_thread_t *th)
     if (VMDEBUG == 2) {
 	SDR();
     }
+
+    // RUBY_TRACE_EVENT_END0("frame", "frame");
 }
 
 /* method dispatch */

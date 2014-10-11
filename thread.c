@@ -60,6 +60,7 @@
 #include "eval_intern.h"
 #include "gc.h"
 #include "timev.h"
+#include "ruby/debug.h"
 #include "ruby/io.h"
 #include "ruby/thread.h"
 #include "ruby/thread_native.h"
@@ -1229,6 +1230,7 @@ blocking_region_begin(rb_thread_t *th, struct rb_blocking_region_buffer *region,
 	th->blocking_region_buffer = region;
 	th->status = THREAD_STOPPED;
 	thread_debug("enter blocking region (%p)\n", (void *)th);
+        RUBY_TRACE_EVENT_BEGIN0("BlockingRegion", "thread");
 	RB_GC_SAVE_MACHINE_CONTEXT(th);
 	gvl_release(th->vm);
 	return TRUE;
@@ -1243,6 +1245,7 @@ blocking_region_end(rb_thread_t *th, struct rb_blocking_region_buffer *region)
 {
     gvl_acquire(th->vm, th);
     rb_thread_set_current(th);
+    RUBY_TRACE_EVENT_END0("BlockingRegion", "thread");
     thread_debug("leave blocking region (%p)\n", (void *)th);
     remove_signal_thread_list(th);
     th->blocking_region_buffer = 0;

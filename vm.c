@@ -1361,6 +1361,7 @@ vm_exec(rb_thread_t *th)
     VALUE initial = 0;
 
     TH_PUSH_TAG(th);
+    RUBY_TRACE_EVENT_BEGIN0("vm_exec", "eval");
     _tag.retval = Qnil;
     if ((state = EXEC_TAG()) == 0) {
       vm_loop_start:
@@ -1608,6 +1609,7 @@ vm_exec(rb_thread_t *th)
     }
   finish_vme:
     TH_POP_TAG();
+    RUBY_TRACE_EVENT_END0("vm_exec", "eval");
     return result;
 }
 
