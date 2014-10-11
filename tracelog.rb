@@ -13,14 +13,16 @@ require 'json'
 
 class TraceLog
   def self.to_json
+    pid = Process.pid
+
     events = to_a.map {|name, cat, ph, ts|
       {
         name: name,
         cat: cat,
         ph: ph,
-        pid: 123,
-        tid: 456,
-        ts: ts
+        pid: pid,
+        tid: 1234, # FIXME
+        ts: ts / 1000
       }
     }
     # events.each {|e| p e }
