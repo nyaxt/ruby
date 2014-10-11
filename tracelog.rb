@@ -15,10 +15,11 @@ class TraceLog
   def self.to_json
     pid = Process.pid
 
-    events = to_a.map {|name, cat, ph, ts|
+    events = to_a.map {|name, cat, args, ph, ts|
       {
         name: name,
         cat: cat,
+        args: args || {},
         ph: ph,
         pid: pid,
         tid: 1234, # FIXME
@@ -32,7 +33,7 @@ class TraceLog
       otherData: {
         version: "ruby #{RUBY_VERSION}" 
       }
-    }.to_json    
+    }.to_json
   end
 end
 

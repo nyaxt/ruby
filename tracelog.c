@@ -27,9 +27,15 @@ clock_abs_ns(void)
     return (uint64_t)(ts.tv_sec * 1000000000) + (uint64_t)(ts.tv_nsec);
 }
 
+typedef struct rb_tracelog_args_struct {
+    VALUE (*serialize_cb)(void*);
+    void* data;
+} rb_tracelog_args_t;
+
 typedef struct rb_tracelog_event_struct {
     const char* name;
     const char* category;
+    struct rb_tracelog_args_struct *args;
     char phase;
     uint64_t timestamp;
     struct rb_tracelog_event_struct *next;
@@ -107,6 +113,7 @@ tracelog_event_new_from_literal(const char* name, const char* category, char pha
     event = chunk_alloc_mem(chunk, sizeof(rb_tracelog_event_t));
     event->name = name;
     event->category = category;
+    event->args = NULL;
     event->phase = phase;
     event->timestamp = clock_abs_ns();
     event->next = NULL;
@@ -134,6 +141,7 @@ tracelog_init(void)
     event = chunk_alloc_mem(g_tracelog->tail_chunk, sizeof(rb_tracelog_event_t));
     event->name = "TracingStartSentinel";
     event->category = "TraceLog";
+    event->args = NULL;
     event->phase = 'I';
     event->timestamp = clock_abs_ns();
     event->next = NULL;
@@ -153,10 +161,11 @@ tracelog_to_a()
     for (event = g_tracelog->head_event; event; event = event->next) {
         VALUE rb_name = rb_str_new_cstr(event->name);
         VALUE rb_category = rb_str_new_cstr(event->category);
+        VALUE rb_args = event->args ? event->args->serialize_cb(event->args->data) : Qnil;
         VALUE rb_phase = rb_str_new(&event->phase, 1);
         VALUE rb_timestamp = ULL2NUM(event->timestamp);
 
-        VALUE rb_event = rb_ary_new_from_args(4, rb_name, rb_category, rb_phase, rb_timestamp);
+        VALUE rb_event = rb_ary_new_from_args(5, rb_name, rb_category, rb_args, rb_phase, rb_timestamp);
         rb_ary_push(ret, rb_event);
     }
 
