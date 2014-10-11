@@ -109,6 +109,12 @@ void rb_tracelog_event_new_from_literal(const char* name, const char* category, 
         rb_tracelog_event_new_from_literal((name), (category), 'E'); \
     } while(0);
 
+void rb_tracelog_event_new2(const char* name, const char* category, const char* argname, const char* argdata, char phase);
+#define RUBY_TRACE_EVENT_BEGIN1(name, category, arg1_name, arg1_val) \
+    do { \
+        rb_tracelog_event_new2((name), (category), (arg1_name), (arg1_val), 'B'); \
+    } while(0);
+
 RUBY_SYMBOL_EXPORT_END
 
 #if defined(__cplusplus)

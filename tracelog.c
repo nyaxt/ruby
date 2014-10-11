@@ -27,7 +27,7 @@ clock_abs_ns(void)
     return (uint64_t)(ts.tv_sec * 1000000000) + (uint64_t)(ts.tv_nsec);
 }
 
-typedef struct rb_tracelog_args_struct {
+typedef struct rb_tracelog_arg_struct {
     VALUE (*serialize_cb)(void*);
     void* data;
 } rb_tracelog_args_t;
@@ -35,7 +35,7 @@ typedef struct rb_tracelog_args_struct {
 typedef struct rb_tracelog_event_struct {
     const char* name;
     const char* category;
-    struct rb_tracelog_args_struct *args;
+    struct rb_tracelog_arg_struct *args;
     char phase;
     uint64_t timestamp;
     struct rb_tracelog_event_struct *next;
@@ -86,7 +86,7 @@ chunk_alloc_mem(rb_tracelog_chunk_t* chunk, size_t size)
     void* ret;
 
     assert(!chunk->next);
-    assert(chunk->capacity > chunk->len);
+    assert(chunk->capacity >= chunk->len);
     space_left = chunk->capacity - chunk->len;
     if (space_left < size) {
         rb_tracelog_chunk_t *new_chunk = chunk_new();
@@ -107,30 +107,71 @@ tracelog_alloc_mem(size_t size)
     return chunk_alloc_mem(g_tracelog->tail_chunk, size);
 }
 
-static void
+static rb_tracelog_event_t*
+tracelog_event_new()
+{
+    rb_tracelog_event_t* event = tracelog_alloc_mem(sizeof(rb_tracelog_event_t));
+    event->next = NULL;
+    g_tracelog->tail_event->next = event;
+    g_tracelog->tail_event = event;
+    return event;
+}
+
+static rb_tracelog_event_t*
 tracelog_event_new_from_literal(const char* name, const char* category, char phase)
 {
     rb_tracelog_event_t* event;
-
-    if (!g_tracelog) return;
-
-    event = tracelog_alloc_mem(sizeof(rb_tracelog_event_t));
+    event = tracelog_event_new();
     event->name = name;
     event->category = category;
     event->args = NULL;
     event->phase = phase;
     event->timestamp = clock_abs_ns();
-    event->next = NULL;
-
-    g_tracelog->tail_event->next = event;
-    g_tracelog->tail_event = event;
+    return event;
 }
 
 /* name, category must be string literal and not dynamically allocated. */
 void
 rb_tracelog_event_new_from_literal(const char* name, const char* category, char phase)
 {
+    if (!g_tracelog) return;
+
     tracelog_event_new_from_literal(name, category, phase);
+}
+
+typedef struct rb_tracelog_arg_string_literal_struct {
+    const char* key;
+    const char* val;
+} rb_tracelog_arg_string_literal_t;
+
+static VALUE
+arg_string_literal_serialize(void* data)
+{
+    rb_tracelog_arg_string_literal_t *arg = (rb_tracelog_arg_string_literal_t*)data;
+    VALUE key = rb_str_new_cstr(arg->key);
+    VALUE val= rb_str_new_cstr(arg->val);
+
+    VALUE args = rb_hash_new();
+    rb_hash_aset(args, key, val);
+    return args;
+}
+
+void
+rb_tracelog_event_new2(const char* name, const char* category, const char* argname, const char* argdata, char phase)
+{
+    rb_tracelog_arg_string_literal_t *data;
+    rb_tracelog_event_t *event;
+
+    if (!g_tracelog) return;
+
+    data = tracelog_alloc_mem(sizeof(struct rb_tracelog_arg_string_literal_struct));
+    data->key = argname;
+    data->val = argdata;
+
+    event = tracelog_event_new_from_literal(name, category, phase);
+    event->args = tracelog_alloc_mem(sizeof(struct rb_tracelog_arg_struct));
+    event->args->serialize_cb = arg_string_literal_serialize;
+    event->args->data = data;
 }
 
 static void

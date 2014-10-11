@@ -1230,7 +1230,7 @@ blocking_region_begin(rb_thread_t *th, struct rb_blocking_region_buffer *region,
 	th->blocking_region_buffer = region;
 	th->status = THREAD_STOPPED;
 	thread_debug("enter blocking region (%p)\n", (void *)th);
-        RUBY_TRACE_EVENT_BEGIN0("BlockingRegion", "thread");
+        RUBY_TRACE_EVENT_BEGIN1("BlockingRegion", "thread", "key", "hoge");
 	RB_GC_SAVE_MACHINE_CONTEXT(th);
 	gvl_release(th->vm);
 	return TRUE;

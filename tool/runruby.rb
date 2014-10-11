@@ -19,7 +19,7 @@ while arg = ARGV[0]
   when re =~ "pure"
     # obsolete switch do nothing
   when re =~ "debugger"
-    require 'shellwords'
+    require_relative '../lib/shellwords'
     precommand.concat(value ? (Shellwords.shellwords(value) unless value == "no") : %w"gdb --args")
   when re =~ "precommand"
     require 'shellwords'
