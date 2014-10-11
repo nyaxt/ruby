@@ -101,16 +101,20 @@ chunk_alloc_mem(rb_tracelog_chunk_t* chunk, size_t size)
     return ret;
 }
 
+static void*
+tracelog_alloc_mem(size_t size)
+{
+    return chunk_alloc_mem(g_tracelog->tail_chunk, size);
+}
+
 static void
 tracelog_event_new_from_literal(const char* name, const char* category, char phase)
 {
-    rb_tracelog_chunk_t* chunk;
     rb_tracelog_event_t* event;
 
     if (!g_tracelog) return;
 
-    chunk = g_tracelog->tail_chunk; 
-    event = chunk_alloc_mem(chunk, sizeof(rb_tracelog_event_t));
+    event = tracelog_alloc_mem(sizeof(rb_tracelog_event_t));
     event->name = name;
     event->category = category;
     event->args = NULL;
@@ -138,7 +142,7 @@ tracelog_init(void)
     g_tracelog->head_chunk = chunk_new();
     g_tracelog->tail_chunk = g_tracelog->head_chunk;
 
-    event = chunk_alloc_mem(g_tracelog->tail_chunk, sizeof(rb_tracelog_event_t));
+    event = tracelog_alloc_mem(sizeof(rb_tracelog_event_t));
     event->name = "TracingStartSentinel";
     event->category = "TraceLog";
     event->args = NULL;
