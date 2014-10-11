@@ -7839,6 +7839,7 @@ gc_prof_mark_timer_start(rb_objspace_t *objspace)
 	gc_prof_record(objspace)->gc_mark_time = getrusage_time();
     }
 #endif
+    RUBY_TRACE_EVENT_BEGIN0("Mark", "GC");
 }
 
 static inline void
@@ -7853,6 +7854,7 @@ gc_prof_mark_timer_stop(rb_objspace_t *objspace)
 	record->gc_mark_time = elapsed_time_from(record->gc_mark_time);
     }
 #endif
+    RUBY_TRACE_EVENT_END0("Mark", "GC");
 }
 
 static inline void
@@ -7868,6 +7870,7 @@ gc_prof_sweep_timer_start(rb_objspace_t *objspace)
 	    objspace->profile.gc_sweep_start_time = getrusage_time();
 	}
     }
+    RUBY_TRACE_EVENT_BEGIN0("Sweep", "GC");
 }
 
 static inline void
@@ -7896,6 +7899,8 @@ gc_prof_sweep_timer_stop(rb_objspace_t *objspace)
 #endif
 	if (heap_pages_deferred_final) objspace->profile.latest_gc_info |= GPR_FLAG_HAVE_FINALIZE;
     }
+
+    RUBY_TRACE_EVENT_END0("Sweep", "GC");
 }
 
 static inline void
